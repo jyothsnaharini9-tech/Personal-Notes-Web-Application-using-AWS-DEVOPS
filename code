@@ -1,0 +1,87 @@
+// === project/aws_notes_app ===
+// A simple Notes app using AWS services: Cognito, Lambda, API Gateway, DynamoDB
+
+// --- Frontend: index.html ---
+<!DOCTYPE html>
+<html>
+<head>
+  <title>AWS Notes App</title>
+  <script src="https://sdk.amazonaws.com/js/aws-sdk-2.877.0.min.js"></script>
+  <style>
+    body { font-family: Arial; max-width: 600px; margin: auto; padding: 20px; }
+    textarea, input { width: 100%; margin: 5px 0; }
+  </style>
+</head>
+<body>
+  <h2>Notes App</h2>
+  <div>
+    <input id="noteTitle" placeholder="Note title" />
+    <textarea id="noteContent" placeholder="Write your note..."></textarea>
+    <button onclick="createNote()">Save Note</button>
+  </div>
+  <h3>Your Notes</h3>
+  <ul id="notesList"></ul>
+
+  <script>
+    const API_ENDPOINT = 'https://your-api-id.execute-api.region.amazonaws.com/prod';
+
+    async function createNote() {
+      const title = document.getElementById('noteTitle').value;
+      const content = document.getElementById('noteContent').value;
+
+      const res = await fetch(`${API_ENDPOINT}/note`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, content, userId: 'demo-user' })
+      });
+      loadNotes();
+    }
+
+    async function loadNotes() {
+      const res = await fetch(`${API_ENDPOINT}/note?userId=demo-user`);
+      const data = await res.json();
+      const notesList = document.getElementById('notesList');
+      notesList.innerHTML = '';
+      data.forEach(note => {
+        const li = document.createElement('li');
+        li.textContent = `${note.title}: ${note.content}`;
+        notesList.appendChild(li);
+      });
+    }
+
+    window.onload = loadNotes;
+  </script>
+</body>
+</html>
+
+// --- Backend: Lambda function (Node.js) ---
+// Filename: lambda/notes.js
+const AWS = require('aws-sdk');
+const dynamo = new AWS.DynamoDB.DocumentClient();
+const TABLE_NAME = 'Notes';
+
+exports.handler = async (event) => {
+  const method = event.httpMethod;
+  const userId = event.queryStringParameters?.userId || JSON.parse(event.body)?.userId;
+
+  if (method === 'POST') {
+    const { title, content } = JSON.parse(event.body);
+    const noteId = `${Date.now()}`;
+    await dynamo.put({
+      TableName: TABLE_NAME,
+      Item: { userId, noteId, title, content },
+    }).promise();
+    return { statusCode: 200, body: JSON.stringify({ message: 'Note saved.' }) };
+  }
+
+  if (method === 'GET') {
+    const result = await dynamo.query({
+      TableName: TABLE_NAME,
+      KeyConditionExpression: 'userId = :u',
+      ExpressionAttributeValues: { ':u': userId },
+    }).promise();
+    return { statusCode: 200, body: JSON.stringify(result.Items) };
+  }
+
+  return { statusCode: 400, body: 'Invalid request' };
+};
