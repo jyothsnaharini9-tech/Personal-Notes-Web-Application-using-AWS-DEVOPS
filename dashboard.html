@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>Dashboard</title>
+
+<link rel="stylesheet"
+href="css/dashboard.css">
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>My Notes</h1>
+
+<input
+id="title"
+placeholder="Title">
+
+<textarea
+id="content"
+placeholder="Write your note"></textarea>
+
+<button
+onclick="addNote()">
+Add Note
+</button>
+
+<div
+id="notes"></div>
+
+<button
+onclick="logout()">
+Logout
+</button>
+
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/dashboard.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,7 @@
+const API_URL = "YOUR_API_GATEWAY_URL";
+
+const USER_POOL_ID = "YOUR_USER_POOL_ID";
+
+const CLIENT_ID = "YOUR_APP_CLIENT_ID";
+
+const REGION = "ap-south-1";
